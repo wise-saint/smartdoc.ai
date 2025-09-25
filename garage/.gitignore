@@ -1,0 +1,21 @@
+# Build folder
+/target/
+
+# Maven wrapper
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+# IDE files
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Spring Boot sensitive configuration
+src/main/resources/application.properties
