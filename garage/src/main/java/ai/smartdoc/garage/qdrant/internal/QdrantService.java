@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,10 +18,11 @@ class QdrantService implements QdrantPort {
     QdrantClient qdrantClient;
 
     @Override
-    public String upsertPoints(List<Chunk> chunks, List<List<Float>> embeddingVectors) throws IOException {
+    public String upsertPoints(List<Chunk> chunks, List<List<Float>> embeddingVectors) {
         if (chunks.size() != embeddingVectors.size()) {
             throw new GarageException("Chunks and Embedding Vectors size doesn't match", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
         String docId = UUID.randomUUID().toString();
         List<QdrantPoint> qdrantPoints = new ArrayList<>();
         for (int i = 0; i < chunks.size(); i++) {
@@ -38,7 +38,11 @@ class QdrantService implements QdrantPort {
 
             qdrantPoints.add(qdrantPoint);
         }
-        qdrantClient.upsertPoints(qdrantPoints);
+
+        UpsertResponse response = qdrantClient.upsertPoints(qdrantPoints);
+        if (!response.getStatus().equals("ok")) {
+            throw new GarageException("Failed to upsert points in Qdrant", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
         return docId;
     }
 }
