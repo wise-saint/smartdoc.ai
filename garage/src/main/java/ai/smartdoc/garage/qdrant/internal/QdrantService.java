@@ -1,8 +1,10 @@
 package ai.smartdoc.garage.qdrant.internal;
 
 import ai.smartdoc.garage.common.dto.Chunk;
+import ai.smartdoc.garage.common.exception.GarageException;
 import ai.smartdoc.garage.qdrant.QdrantPort;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -19,7 +21,7 @@ class QdrantService implements QdrantPort {
     @Override
     public String upsertPoints(List<Chunk> chunks, List<List<Float>> embeddingVectors) throws IOException {
         if (chunks.size() != embeddingVectors.size()) {
-            throw new RuntimeException("Chunks and Embedding Vectors size doesn't match");
+            throw new GarageException("Chunks and Embedding Vectors size doesn't match", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         String docId = UUID.randomUUID().toString();
         List<QdrantPoint> qdrantPoints = new ArrayList<>();

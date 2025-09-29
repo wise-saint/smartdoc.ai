@@ -2,6 +2,7 @@ package ai.smartdoc.garage.file.internal;
 
 import ai.smartdoc.garage.common.dto.Chunk;
 import ai.smartdoc.garage.common.dto.UploadResponse;
+import ai.smartdoc.garage.common.exception.GarageException;
 import ai.smartdoc.garage.embedding.EmbeddingPort;
 import ai.smartdoc.garage.file.FilePort;
 import ai.smartdoc.garage.qdrant.QdrantPort;
@@ -32,13 +33,16 @@ class FileService implements FilePort {
 
     @Override
     public UploadResponse uploadFile(MultipartFile file) throws IOException {
+        if (file.getContentType() == null) {
+            throw new GarageException("Missing content type", HttpStatus.BAD_REQUEST);
+        }
         String contentType = file.getContentType().toLowerCase();
         List<String> pageList;
 
         if(contentType.equals("application/pdf") || contentType.equals("application/x-pdf")) {
             pageList = extractPagesFromPdf(file);
         } else {
-            return new UploadResponse("NA", "Only PDF supported", HttpStatus.BAD_REQUEST);
+            throw new  GarageException("Only PDF supported", HttpStatus.UNSUPPORTED_MEDIA_TYPE);
         }
 
         List<Pair<String, Integer>> wordPageNoMap = getWordPageNoMap(pageList);
@@ -61,7 +65,7 @@ class FileService implements FilePort {
                 if (!text.isEmpty()) pageList.add(text);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Internal server error processing file");
+            throw new GarageException("Error extracting text from file", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return pageList;
     }
