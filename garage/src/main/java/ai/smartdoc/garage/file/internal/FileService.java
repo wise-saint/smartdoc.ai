@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +31,7 @@ class FileService implements FilePort {
     QdrantPort qdrantPort;
 
     @Override
-    public UploadResponse uploadFile(MultipartFile file) throws IOException {
+    public UploadResponse uploadFile(MultipartFile file) {
         if (file.getContentType() == null) {
             throw new GarageException("Missing content type", HttpStatus.BAD_REQUEST);
         }
@@ -55,8 +54,7 @@ class FileService implements FilePort {
 
     private List<String> extractPagesFromPdf(MultipartFile file) {
         List<String> pageList = new ArrayList<>();
-        try {
-            PDDocument document = PDDocument.load(file.getInputStream());
+        try(PDDocument document = PDDocument.load(file.getInputStream())) {
             PDFTextStripper stripper = new PDFTextStripper();
             for (int i = 1; i <= document.getNumberOfPages(); i++) {
                 stripper.setStartPage(i);

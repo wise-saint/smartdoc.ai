@@ -7,9 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
 @RestController
 @RequestMapping(path = "/sd/file")
 @CrossOrigin
@@ -19,7 +16,7 @@ public class FileHandler {
     FilePort filePort;
 
     @RequestMapping(path = "/upload", method = RequestMethod.POST)
-    public ResponseEntity<UploadResponse> uploadFile(@RequestParam MultipartFile file) throws ExecutionException, InterruptedException, IOException {
+    public ResponseEntity<UploadResponse> uploadFile(@RequestParam MultipartFile file) {
         return new ResponseEntity<>(filePort.uploadFile(file), HttpStatus.OK);
     }
 }

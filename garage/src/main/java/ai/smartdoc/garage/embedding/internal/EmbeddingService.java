@@ -5,7 +5,6 @@ import ai.smartdoc.garage.embedding.EmbeddingPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +15,7 @@ class EmbeddingService implements EmbeddingPort {
     EmbeddingClient embeddingClient;
 
     @Override
-    public List<List<Float>> getEmbeddingVectors(List<Chunk> chunks) throws IOException {
+    public List<List<Float>> getEmbeddingVectors(List<Chunk> chunks) {
         List<String> chunkTextList = new ArrayList<>();
         for (Chunk chunk: chunks) {
             chunkTextList.add(chunk.getText());

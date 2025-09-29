@@ -1,7 +1,9 @@
 package ai.smartdoc.garage.qdrant.internal;
 
+import ai.smartdoc.garage.common.exception.GarageException;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import okhttp3.*;
 
@@ -23,23 +25,25 @@ class QdrantClient {
         this.API_KEY = apiKey;
     }
 
-    public Object upsertPoints(List<QdrantPoint> qdrantPoints) throws IOException {
+    public UpsertResponse upsertPoints(List<QdrantPoint> qdrantPoints) {
         String jsonBody = new Gson().toJson(Map.of("points", qdrantPoints));
         RequestBody body = RequestBody.create(jsonBody, MediaType.get("application/json"));
         Request request = new Request.Builder()
-                .url(BASE_URL + "/pdfText/points")
+                .url(BASE_URL + "/knowledge-base/points")
                 .put(body)
                 .addHeader("api-key", API_KEY)
                 .addHeader("Content-Type", "application/json")
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful()) {
-                System.out.println("Points upserted successfully: " + response.body().string());
+            if (response.isSuccessful() && response.body() != null) {
+                return new Gson().fromJson(response.body().string(), UpsertResponse.class);
             } else {
-                System.err.println("Request failed: " + response.code() + " " + response.body().string());
+                String error = response.body() != null ? response.body().string() : "Unknown error";
+                throw new GarageException("Failed to upsert point in Qdrant: " + error, HttpStatus.INTERNAL_SERVER_ERROR);
             }
+        } catch (IOException e) {
+            throw new GarageException("Error connecting with Qdrant", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 }
