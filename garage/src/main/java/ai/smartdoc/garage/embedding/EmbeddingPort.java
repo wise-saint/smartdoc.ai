@@ -7,4 +7,6 @@ import java.util.List;
 public interface EmbeddingPort {
 
     List<List<Float>> getEmbeddingVectors(List<Chunk> chunks);
+
+    List<Float> getEmbeddingVectors(String text);
 }

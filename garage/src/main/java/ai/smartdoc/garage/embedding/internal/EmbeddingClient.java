@@ -55,7 +55,7 @@ class EmbeddingClient {
                 throw new GarageException("Failed to get embedding vectors: " + error, HttpStatus.BAD_GATEWAY);
             }
         } catch (Exception e) {
-            throw new GarageException("Error connecting with Hugging Face embedding API", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new GarageException("Error computing embedding vector: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

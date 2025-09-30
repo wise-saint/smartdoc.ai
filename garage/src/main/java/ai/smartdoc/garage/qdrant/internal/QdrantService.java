@@ -1,6 +1,7 @@
 package ai.smartdoc.garage.qdrant.internal;
 
 import ai.smartdoc.garage.common.dto.Chunk;
+import ai.smartdoc.garage.common.dto.QdrantSearchPoint;
 import ai.smartdoc.garage.common.exception.GarageException;
 import ai.smartdoc.garage.qdrant.QdrantPort;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,5 +45,14 @@ class QdrantService implements QdrantPort {
             throw new GarageException("Failed to upsert points in Qdrant", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return docId;
+    }
+
+    @Override
+    public List<QdrantSearchPoint> queryPoints(List<Float> queryVector, String docId) {
+        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, 5, docId);
+        List<QdrantSearchPoint> points = null;
+        if (searchResponse.getStatus().equals("ok") && searchResponse.getResult() != null)
+            points = searchResponse.getResult().getPoints();
+        return points;
     }
 }
