@@ -8,6 +8,7 @@ public class UpsertResponse {
     private String status;
     private Result result;
 
+    @Data
     public static class Result {
         private String status;
 

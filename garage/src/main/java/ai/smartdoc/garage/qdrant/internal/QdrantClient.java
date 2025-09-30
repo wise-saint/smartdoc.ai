@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +45,39 @@ class QdrantClient {
             }
         } catch (IOException e) {
             throw new GarageException("Error connecting with Qdrant", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public SearchResponse queryPoints(List<Float> queryVector, int limit, String docId) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("query", queryVector);
+        body.put("limit", limit);
+        body.put("with_payload", true);
+        body.put("with_vector", false);
+        body.put("filter", Map.of(
+                "must", List.of(Map.of(
+                        "key", "docId",
+                        "match", Map.of("value", docId)
+                ))
+        ));
+
+        String jsonBody = new Gson().toJson(body);
+        RequestBody requestBody = RequestBody.create(jsonBody, MediaType.get("application/json"));
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/knowledge-base/points/query")
+                .post(requestBody)
+                .addHeader("api-key", API_KEY)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
+                return new Gson().fromJson(response.body().string(), SearchResponse.class);
+            } else {
+                throw new GarageException("Qdrant query failed: " + response.code(), HttpStatus.BAD_GATEWAY);
+            }
+        } catch (Exception e) {
+            throw new GarageException("Error querying points: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
