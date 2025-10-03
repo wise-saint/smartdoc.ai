@@ -3,7 +3,7 @@ package ai.smartdoc.garage.file.internal;
 import ai.smartdoc.garage.common.dto.Chunk;
 import ai.smartdoc.garage.common.dto.UploadResponse;
 import ai.smartdoc.garage.common.exception.GarageException;
-import ai.smartdoc.garage.embedding.EmbeddingPort;
+import ai.smartdoc.garage.huggingface.HuggingFacePort;
 import ai.smartdoc.garage.file.FilePort;
 import ai.smartdoc.garage.qdrant.QdrantPort;
 import ai.smartdoc.garage.common.utils.Pair;
@@ -25,7 +25,7 @@ class FileService implements FilePort {
     Logger logger = LoggerFactory.getLogger(FileService.class);
 
     @Autowired
-    EmbeddingPort embeddingPort;
+    HuggingFacePort huggingFacePort;
 
     @Autowired
     QdrantPort qdrantPort;
@@ -46,7 +46,7 @@ class FileService implements FilePort {
 
         List<Pair<String, Integer>> wordPageNoMap = getWordPageNoMap(pageList);
         List<Chunk> chunks = convertToChunks(wordPageNoMap);
-        List<List<Float>> embeddingVectors = embeddingPort.getEmbeddingVectors(chunks);
+        List<List<Float>> embeddingVectors = huggingFacePort.getEmbeddingVectors(chunks);
         String docId = qdrantPort.upsertPoints(chunks, embeddingVectors);
 
         return new UploadResponse(docId, HttpStatus.ACCEPTED);

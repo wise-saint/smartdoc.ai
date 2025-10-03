@@ -14,7 +14,7 @@ public class QnAHandler {
     QnAPort qnAPort;
 
     @RequestMapping(path = "/ask", method = RequestMethod.GET)
-    public ResponseEntity<Object> askQuestion(@RequestParam String docId, @RequestParam String question) {
+    public ResponseEntity<String> askQuestion(@RequestParam String docId, @RequestParam String question) {
         return new ResponseEntity<>(qnAPort.askQuestion(docId, question), HttpStatus.OK);
     }
 
