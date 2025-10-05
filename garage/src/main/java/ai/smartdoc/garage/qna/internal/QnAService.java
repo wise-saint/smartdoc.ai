@@ -32,11 +32,13 @@ class QnAService implements QnAPort {
             StringBuilder contextBuilder = new StringBuilder();
             for (int i = 0; i < qdrantSearchPoints.size(); i++) {
                 QdrantSearchPoint point = qdrantSearchPoints.get(i);
-                if (point.getPayload() != null && point.getPayload().getChunk() != null) {
+                if (point.getScore() != null && point.getScore() > 0.6 &&
+                        point.getPayload() != null && point.getPayload().getChunk() != null) {
                     Chunk chunk = point.getPayload().getChunk();
                     if (chunk.getText() != null && !chunk.getText().isEmpty()) {
                         contextBuilder.append("Chunk ").append(i + 1).append(": ")
                                 .append(chunk.getText()).append("\n");
+                        if (contextBuilder.length() == 3) break;
                     }
                 }
             }

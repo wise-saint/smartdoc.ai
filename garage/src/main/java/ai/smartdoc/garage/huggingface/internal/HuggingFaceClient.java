@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Component
 class HuggingFaceClient {
@@ -28,7 +29,11 @@ class HuggingFaceClient {
                       @Value("${huggingface.chat-completion-url}") String chatCompletionUrl,
                       @Value("${huggingface.chat-completion-model}") String chatCompletionModel,
                       @Value("${huggingface.api-key}") String apiKey) {
-        this.client = new OkHttpClient();
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(120, TimeUnit.SECONDS)
+                .readTimeout(180, TimeUnit.SECONDS)
+                .build();
         this.EMBEDDING_URL = embeddingUrl;
         this.CHAT_COMPLETION_URL = chatCompletionUrl;
         this.CHAT_COMPLETION_MODEL = chatCompletionModel;
@@ -70,11 +75,20 @@ class HuggingFaceClient {
         String finalPrompt = "Use ONLY the following context to answer:\n\n"
                 + context + "\nQuestion: " + question;
 
-        JsonObject message = new JsonObject();
-        message.addProperty("role", "user");
-        message.addProperty("content", finalPrompt);
+        JsonObject systemMessage = new JsonObject();
+        systemMessage.addProperty("role", "system");
+        systemMessage.addProperty("content", "You are an AI assistant. " +
+                "Do not use any external knowledge or assumptions. " +
+                "Generate answers strictly using the provided context. " +
+                "If context is insufficient to answer the questions, don't generate answer.");
+
+        JsonObject userMessage = new JsonObject();
+        userMessage.addProperty("role", "user");
+        userMessage.addProperty("content", finalPrompt);
+
         JsonArray messages = new JsonArray();
-        messages.add(message);
+        messages.add(systemMessage);
+        messages.add(userMessage);
 
         JsonObject payload = new JsonObject();
         payload.addProperty("model", CHAT_COMPLETION_MODEL);
