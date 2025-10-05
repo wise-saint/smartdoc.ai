@@ -70,7 +70,7 @@ class FileService implements FilePort {
 
     private List<Chunk> convertToChunks(List<Pair<String, Integer>> wordPageNoMap) {
         List<Chunk> chunks = new ArrayList<>();
-        int chunkSize = 300; // 300 words per chunk
+        int chunkSize = 256; // 256 words per chunk
         int overlap = 30;
         for (int i = 0; i < wordPageNoMap.size(); i += (chunkSize - overlap)) {
             int j = Math.min(i + chunkSize, wordPageNoMap.size());

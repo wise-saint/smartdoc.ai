@@ -49,7 +49,7 @@ class QdrantService implements QdrantPort {
 
     @Override
     public List<QdrantSearchPoint> queryPoints(List<Float> queryVector, String docId) {
-        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, 5, docId);
+        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, 10, docId);
         List<QdrantSearchPoint> points = null;
         if (searchResponse.getStatus().equals("ok") && searchResponse.getResult() != null)
             points = searchResponse.getResult().getPoints();
