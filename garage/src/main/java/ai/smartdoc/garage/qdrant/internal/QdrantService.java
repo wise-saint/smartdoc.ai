@@ -1,7 +1,6 @@
 package ai.smartdoc.garage.qdrant.internal;
 
 import ai.smartdoc.garage.common.dto.Chunk;
-import ai.smartdoc.garage.common.dto.QdrantSearchPoint;
 import ai.smartdoc.garage.common.exception.GarageException;
 import ai.smartdoc.garage.qdrant.QdrantPort;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,11 +47,19 @@ class QdrantService implements QdrantPort {
     }
 
     @Override
-    public List<QdrantSearchPoint> queryPoints(List<Float> queryVector, String docId) {
-        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, 10, docId);
-        List<QdrantSearchPoint> points = null;
-        if (searchResponse.getStatus().equals("ok") && searchResponse.getResult() != null)
-            points = searchResponse.getResult().getPoints();
-        return points;
+    public List<Chunk> queryPoints(List<Float> queryVector, String docId, Integer topK) {
+        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, topK, docId);
+        List<Chunk> chunkList = new ArrayList<>();
+        if (searchResponse.getStatus().equals("ok") && searchResponse.getResult() != null) {
+            SearchResponse.Result result = searchResponse.getResult();
+            if (result.getPoints() != null) {
+                for (QdrantSearchPoint point: result.getPoints()) {
+                    if (point.getPayload() != null && point.getPayload().getChunk() != null) {
+                        chunkList.add(point.getPayload().getChunk());
+                    }
+                }
+            }
+        }
+        return chunkList;
     }
 }

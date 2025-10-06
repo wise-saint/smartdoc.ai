@@ -1,5 +1,6 @@
-package ai.smartdoc.garage.common.dto;
+package ai.smartdoc.garage.qdrant.internal;
 
+import ai.smartdoc.garage.common.dto.Chunk;
 import lombok.Data;
 
 @Data
