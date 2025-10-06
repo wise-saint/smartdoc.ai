@@ -42,6 +42,7 @@ class HuggingFaceService implements HuggingFacePort {
             ChatCompletionResponse.Choice choice = response.getChoices().get(0);
             if (choice.getMessage() != null) {
                 content = choice.getMessage().getContent();
+                content = content.replaceAll("(?s)<think>.*?</think>", "").trim();
             }
         }
         return content;
