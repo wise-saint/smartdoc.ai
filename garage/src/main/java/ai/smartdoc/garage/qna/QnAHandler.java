@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/sd/qna")
 @CrossOrigin
-public class QnAHandler {
+public class QnaHandler {
 
     @Autowired
     QnAPort qnAPort;
