@@ -20,9 +20,9 @@ class HuggingFaceService implements HuggingFacePort {
 
     @Override
     public List<List<Float>> getEmbeddingVectors(List<Chunk> chunks) {
-        int batchSize = 64;
+        int batchSize = 16;
         List<List<Float>> embeddingVectors = new ArrayList<>(Collections.nCopies(chunks.size(), null));
-        ExecutorService executor = Executors.newFixedThreadPool(4);
+        ExecutorService executor = Executors.newFixedThreadPool(8);
         List<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < chunks.size(); i += batchSize) {
             int start = i;
