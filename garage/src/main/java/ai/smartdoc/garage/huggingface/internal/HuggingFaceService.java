@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.*;
 
 @Service
 class HuggingFaceService implements HuggingFacePort {
@@ -18,11 +20,39 @@ class HuggingFaceService implements HuggingFacePort {
 
     @Override
     public List<List<Float>> getEmbeddingVectors(List<Chunk> chunks) {
-        List<String> chunkTextList = new ArrayList<>();
-        for (Chunk chunk: chunks) {
-            chunkTextList.add(chunk.getText());
+        int batchSize = 16;
+        List<List<Float>> embeddingVectors = new ArrayList<>(Collections.nCopies(chunks.size(), null));
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+        List<Future<?>> futures = new ArrayList<>();
+        for (int i = 0; i < chunks.size(); i += batchSize) {
+            int start = i;
+            int end = Math.min(i + batchSize, chunks.size());
+            List<Chunk> batch = chunks.subList(start, end);
+            Future<?> f = executor.submit(() -> {
+                List<String> texts = batch.stream().map(Chunk::getText).toList();
+                List<List<Float>> batchVectors = huggingFaceClient.getEmbeddingVectors(texts);
+                for (int k = 0; k < batch.size(); k++) {
+                    embeddingVectors.set(start + k, batchVectors.get(k));
+                }
+            });
+            futures.add(f);
         }
-        return huggingFaceClient.getEmbeddingVectors(chunkTextList);
+        for (Future<?> f : futures) {
+            try {
+                f.get();
+            } catch (Exception e) {
+                throw new GarageException("Embedding batch failed " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(2, TimeUnit.MINUTES)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            throw new GarageException("Executor interrupted as time exceeded 2 minutes", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return embeddingVectors;
     }
 
     @Override
