@@ -12,8 +12,9 @@ class QdrantPoint {
 
     @Data
     public static class QdrantPayload {
+        private String chatId;
         private String docId;
-        private Chunk chunk;
+        private Integer chunkIndex;
         private Long createdAt;
     }
 }

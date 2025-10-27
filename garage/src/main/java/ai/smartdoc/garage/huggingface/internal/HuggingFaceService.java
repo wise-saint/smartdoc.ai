@@ -1,6 +1,6 @@
 package ai.smartdoc.garage.huggingface.internal;
 
-import ai.smartdoc.garage.common.dto.Chunk;
+import ai.smartdoc.garage.chat.internal.entity.Chunk;
 import ai.smartdoc.garage.common.exception.GarageException;
 import ai.smartdoc.garage.huggingface.HuggingFacePort;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ class HuggingFaceService implements HuggingFacePort {
             int end = Math.min(i + batchSize, chunks.size());
             List<Chunk> batch = chunks.subList(start, end);
             Future<?> f = executor.submit(() -> {
-                List<String> texts = batch.stream().map(Chunk::getText).toList();
+                List<String> texts = batch.stream().map(Chunk::getPreprocessedText).toList();
                 List<List<Float>> batchVectors = huggingFaceClient.getEmbeddingVectors(texts);
                 for (int k = 0; k < batch.size(); k++) {
                     embeddingVectors.set(start + k, batchVectors.get(k));
