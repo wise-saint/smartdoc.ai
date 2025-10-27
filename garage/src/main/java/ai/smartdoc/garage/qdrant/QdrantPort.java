@@ -1,7 +1,5 @@
 package ai.smartdoc.garage.qdrant;
 
-
-
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
 
 import java.util.List;

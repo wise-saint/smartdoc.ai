@@ -39,7 +39,7 @@ class FileService {
     @Autowired
     FileDao fileDao;
 
-    public UploadResponse uploadFile(String chatId, MultipartFile file) {
+    UploadResponse uploadFile(String chatId, MultipartFile file) {
         Chat.Document document = chatService.addDocumentInChat(chatId, file);
         String docId = document.getDocId();
 

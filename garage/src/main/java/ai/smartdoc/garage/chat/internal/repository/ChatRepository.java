@@ -1,7 +1,6 @@
 package ai.smartdoc.garage.chat.internal.repository;
 
 import ai.smartdoc.garage.chat.internal.entity.Chat;
-import org.springframework.data.mongodb.core.convert.ObjectPath;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

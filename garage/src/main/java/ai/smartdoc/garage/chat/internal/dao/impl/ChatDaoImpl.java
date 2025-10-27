@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import java.util.List;
 import java.util.Optional;
 
-public class ChatDaoImpl implements ChatRepository {
+class ChatDaoImpl implements ChatRepository {
 
     @Autowired
     @Qualifier("sdMongoTemplate")

@@ -1,6 +1,5 @@
 package ai.smartdoc.garage.qdrant.internal;
 
-
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
 import ai.smartdoc.garage.common.exception.GarageException;
 import ai.smartdoc.garage.qdrant.QdrantPort;
