@@ -1,6 +1,7 @@
 package ai.smartdoc.garage.qdrant.internal;
 
-import ai.smartdoc.garage.common.dto.Chunk;
+
+import ai.smartdoc.garage.chat.internal.entity.Chunk;
 import ai.smartdoc.garage.common.exception.GarageException;
 import ai.smartdoc.garage.qdrant.QdrantPort;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,17 +19,17 @@ class QdrantService implements QdrantPort {
     QdrantClient qdrantClient;
 
     @Override
-    public String upsertPoints(List<Chunk> chunks, List<List<Float>> embeddingVectors) {
+    public String upsertPoints(List<Chunk> chunks, List<List<Float>> embeddingVectors, String docId, String chatId) {
         if (chunks.size() != embeddingVectors.size()) {
             throw new GarageException("Chunks and Embedding Vectors size doesn't match", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        String docId = UUID.randomUUID().toString();
         List<QdrantPoint> qdrantPoints = new ArrayList<>();
         for (int i = 0; i < chunks.size(); i++) {
             QdrantPoint.QdrantPayload qdrantPayload = new QdrantPoint.QdrantPayload();
+            qdrantPayload.setChatId(chatId);
             qdrantPayload.setDocId(docId);
-            qdrantPayload.setChunk(chunks.get(i));
+            qdrantPayload.setChunkIndex(chunks.get(i).getChunkIndex());
             qdrantPayload.setCreatedAt(System.currentTimeMillis());
 
             QdrantPoint qdrantPoint = new QdrantPoint();
@@ -40,22 +41,23 @@ class QdrantService implements QdrantPort {
         }
 
         UpsertResponse response = qdrantClient.upsertPoints(qdrantPoints);
-        if (!response.getStatus().equals("ok")) {
-            throw new GarageException("Failed to upsert points in Qdrant", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return docId;
+        return response.getStatus();
     }
 
     @Override
-    public List<Chunk> queryPoints(List<Float> queryVector, String docId, Integer topK) {
-        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, topK, docId);
+    public List<Chunk> queryPoints(List<Float> queryVector, String chatId, Integer topK) {
+        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, topK, chatId);
         List<Chunk> chunkList = new ArrayList<>();
         if (searchResponse.getStatus().equals("ok") && searchResponse.getResult() != null) {
             SearchResponse.Result result = searchResponse.getResult();
             if (result.getPoints() != null) {
                 for (QdrantSearchPoint point: result.getPoints()) {
-                    if (point.getPayload() != null && point.getPayload().getChunk() != null) {
-                        chunkList.add(point.getPayload().getChunk());
+                    if (point.getPayload() != null && point.getPayload().getDocId() != null
+                            && point.getPayload().getChunkIndex() != null) {
+                        chunkList.add(Chunk.builder()
+                                        .docId(point.getPayload().getDocId())
+                                        .chunkIndex(point.getPayload().getChunkIndex())
+                                        .build());
                     }
                 }
             }

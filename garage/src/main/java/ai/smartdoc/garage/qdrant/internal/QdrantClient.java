@@ -48,7 +48,7 @@ class QdrantClient {
         }
     }
 
-    public SearchResponse queryPoints(List<Float> queryVector, int limit, String docId) {
+    public SearchResponse queryPoints(List<Float> queryVector, int limit, String chatId) {
         Map<String, Object> body = new HashMap<>();
         body.put("query", queryVector);
         body.put("limit", limit);
@@ -56,8 +56,8 @@ class QdrantClient {
         body.put("with_vector", false);
         body.put("filter", Map.of(
                 "must", List.of(Map.of(
-                        "key", "docId",
-                        "match", Map.of("value", docId)
+                        "key", "chatId",
+                        "match", Map.of("value", chatId)
                 ))
         ));
 
