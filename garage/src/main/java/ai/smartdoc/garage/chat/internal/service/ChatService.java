@@ -19,16 +19,16 @@ class ChatService {
     @Autowired
     ChatDao chatDao;
 
-    public Chat createChat(String userId) {
+    Chat createChat(String userId) {
         Chat chat = new Chat(userId);
         return chatDao.save(chat);
     }
 
-    public List<Chat> getUserChats(String userId) {
+    List<Chat> getUserChats(String userId) {
         return chatDao.getUserChats(userId);
     }
 
-    public Chat.Document addDocumentInChat(String chatId, MultipartFile file) {
+    Chat.Document addDocumentInChat(String chatId, MultipartFile file) {
         String docName = file.getOriginalFilename();
         if (docName == null || docName.isEmpty()) {
             throw new GarageException("Filename can't be null or empty", HttpStatus.BAD_REQUEST);

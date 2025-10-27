@@ -1,8 +1,6 @@
 package ai.smartdoc.garage.qdrant.internal;
 
-import ai.smartdoc.garage.common.dto.Chunk;
 import lombok.Data;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 
 @Data
 class QdrantSearchPoint {

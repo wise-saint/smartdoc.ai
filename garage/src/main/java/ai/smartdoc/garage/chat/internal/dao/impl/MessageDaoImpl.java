@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.List;
 
-public class MessageDaoImpl implements MessageRepository {
+class MessageDaoImpl implements MessageRepository {
 
     @Autowired
     @Qualifier("sdMongoTemplate")

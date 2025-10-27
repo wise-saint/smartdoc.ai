@@ -1,6 +1,5 @@
 package ai.smartdoc.garage.chat.internal.service;
 
-import ai.smartdoc.garage.chat.ChatPort;
 import ai.smartdoc.garage.chat.internal.dao.FileDao;
 import ai.smartdoc.garage.chat.internal.dao.MessageDao;
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
@@ -39,11 +38,11 @@ class MessageService {
     @Autowired
     FileDao fileDao;
 
-    public List<Message> getChatMessages(String userId, String chatId) {
+    List<Message> getChatMessages(String userId, String chatId) {
         return messageDao.getChatMessages(chatId);
     };
 
-    public String askQuestion(String chatId, String question) {
+    String askQuestion(String chatId, String question) {
         question = preprocessQuestion(question);
         List<Float> embeddingVector = huggingFacePort.getEmbeddingVectors(question);
         List<Chunk> chunkList = qdrantPort.queryPoints(embeddingVector, chatId, 20);

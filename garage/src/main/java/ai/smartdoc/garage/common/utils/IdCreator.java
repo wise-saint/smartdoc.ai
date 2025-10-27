@@ -1,7 +1,5 @@
 package ai.smartdoc.garage.common.utils;
 
-import org.apache.commons.lang3.RandomStringUtils;
-
 import java.security.SecureRandom;
 import java.time.Instant;
 
