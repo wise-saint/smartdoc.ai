@@ -1,5 +1,6 @@
 package ai.smartdoc.garage.chat.internal.entity;
 
+import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -9,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
 @Document("messages")
+@Builder
 public class Message {
 
     @Id

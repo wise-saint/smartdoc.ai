@@ -1,5 +1,6 @@
 package ai.smartdoc.garage.huggingface.internal;
 
+import ai.smartdoc.garage.chat.internal.entity.Message;
 import ai.smartdoc.garage.common.exception.GarageException;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -71,24 +72,11 @@ class HuggingFaceClient {
         }
     }
 
-    public ChatCompletionResponse completeChat(String context, String question) {
-        String finalPrompt = "Use ONLY the following context to answer:\n\n"
-                + context + "\nQuestion: " + question;
-
-        JsonObject systemMessage = new JsonObject();
-        systemMessage.addProperty("role", "system");
-        systemMessage.addProperty("content", "You are an AI assistant. " +
-                "Do not use any external knowledge or assumptions. " +
-                "Generate answers strictly using the provided context. " +
-                "If context is insufficient to answer the questions, don't generate answer.");
-
-        JsonObject userMessage = new JsonObject();
-        userMessage.addProperty("role", "user");
-        userMessage.addProperty("content", finalPrompt);
-
+    public ChatCompletionResponse completeChat(String context, String question, List<Message> chatHistory) {
         JsonArray messages = new JsonArray();
-        messages.add(systemMessage);
-        messages.add(userMessage);
+        messages.add(getSystemMessage());
+        messages.addAll(getPastMessages(chatHistory));
+        messages.add(getUserMessage(context, question));
 
         JsonObject payload = new JsonObject();
         payload.addProperty("model", CHAT_COMPLETION_MODEL);
@@ -115,5 +103,37 @@ class HuggingFaceClient {
         } catch (Exception e) {
             throw new GarageException("Error generating answer: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private JsonObject getSystemMessage() {
+        JsonObject systemMessage = new JsonObject();
+        systemMessage.addProperty("role", "system");
+        systemMessage.addProperty("content", "You are an AI assistant. " +
+                "Do not use any external knowledge or assumptions. " +
+                "Generate answers strictly using the provided context. " +
+                "If context is insufficient to answer the questions, don't generate answer.");
+        return systemMessage;
+    }
+
+    private JsonArray getPastMessages(List<Message> messageList) {
+        JsonArray pastMessages = new JsonArray();
+        if (messageList != null) {
+            for (Message message: messageList) {
+                JsonObject pastMessage = new JsonObject();
+                pastMessage.addProperty("role", message.getSender());
+                pastMessage.addProperty("content", message.getMessage());
+                pastMessages.add(pastMessage);
+            }
+        }
+        return pastMessages;
+    }
+
+    private JsonObject getUserMessage(String context, String message) {
+        String finalPrompt = "Use ONLY the following context to answer:\n\n"
+                + context + "\nQuestion: " + message;
+        JsonObject userMessage = new JsonObject();
+        userMessage.addProperty("role", "user");
+        userMessage.addProperty("content", finalPrompt);
+        return userMessage;
     }
 }

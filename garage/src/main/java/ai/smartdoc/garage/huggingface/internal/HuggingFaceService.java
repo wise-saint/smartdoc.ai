@@ -1,6 +1,7 @@
 package ai.smartdoc.garage.huggingface.internal;
 
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
+import ai.smartdoc.garage.chat.internal.entity.Message;
 import ai.smartdoc.garage.common.exception.GarageException;
 import ai.smartdoc.garage.huggingface.HuggingFacePort;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,8 +66,8 @@ class HuggingFaceService implements HuggingFacePort {
     }
 
     @Override
-    public String completeChat(String context, String question) {
-        ChatCompletionResponse response = huggingFaceClient.completeChat(context, question);
+    public String completeChat(String context, String question, List<Message> chatHistory) {
+        ChatCompletionResponse response = huggingFaceClient.completeChat(context, question, chatHistory);
         String content = null;
         if (response.getChoices() != null && !response.getChoices().isEmpty()) {
             ChatCompletionResponse.Choice choice = response.getChoices().get(0);
