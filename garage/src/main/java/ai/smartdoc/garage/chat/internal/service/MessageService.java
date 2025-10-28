@@ -7,6 +7,7 @@ import ai.smartdoc.garage.chat.internal.entity.Message;
 import ai.smartdoc.garage.cohere.CoherePort;
 import ai.smartdoc.garage.common.dto.CohereRerankResponse;
 import ai.smartdoc.garage.common.exception.GarageException;
+import ai.smartdoc.garage.common.utils.IdCreator;
 import ai.smartdoc.garage.huggingface.HuggingFacePort;
 import ai.smartdoc.garage.qdrant.QdrantPort;
 import org.slf4j.Logger;
@@ -38,6 +39,16 @@ class MessageService {
     @Autowired
     FileDao fileDao;
 
+    private Message saveMessage(String chatId, String messageText, String sender) {
+        Message message = Message.builder()
+                .chatId(chatId)
+                .messageId(IdCreator.createId(Message.class))
+                .sender(sender)
+                .message(messageText)
+                .build();
+        return messageDao.save(message);
+    }
+
     List<Message> getChatMessages(String userId, String chatId) {
         return messageDao.getChatMessages(chatId);
     };
@@ -45,7 +56,7 @@ class MessageService {
     String askQuestion(String chatId, String question) {
         question = preprocessQuestion(question);
         List<Float> embeddingVector = huggingFacePort.getEmbeddingVectors(question);
-        List<Chunk> chunkList = qdrantPort.queryPoints(embeddingVector, chatId, 20);
+        List<Chunk> chunkList = qdrantPort.queryPoints(embeddingVector, chatId, 30);
         chunkList = fileDao.getChunksByDocIdAndChunkIndex(chunkList);
 
         List<String> documents = new ArrayList<>();
@@ -69,11 +80,15 @@ class MessageService {
 
         String answer = null;
         if (!context.isEmpty()) {
-            answer = huggingFacePort.completeChat(context, question);
+            List<Message> chatHistory = messageDao.getChatMessages(chatId);
+            answer = huggingFacePort.completeChat(context, question, chatHistory);
         }
         if (answer == null || answer.isEmpty()) {
-            throw new GarageException("Failed to generate answer", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new GarageException("Failed to generate answer as threshold cosine similarity score didn't pass", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        saveMessage(chatId, question, "user");
+        saveMessage(chatId, answer, "assistant");
         return answer;
     }
 

@@ -23,6 +23,6 @@ public class IdCreator {
         // Timestamp component: last 5 digits of epoch milliseconds
         String timestamp = String.format("%05d", Instant.now().toEpochMilli() % 100_000);
 
-        return prefix + "-" + alphaNum + "-" + timestamp;
+        return prefix + alphaNum + "-" + timestamp;
     }
 }
