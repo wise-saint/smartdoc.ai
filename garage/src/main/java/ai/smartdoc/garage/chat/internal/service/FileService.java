@@ -114,9 +114,10 @@ class FileService {
         List<Chunk> chunkList = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         int chunkIndex = 0;
+        int chunkSize = 768; // Chars count
         for (int start = 0, itr = 0; itr < sentenceList.size(); itr++) {
             sb.append(sentenceList.get(itr)).append(" ");
-            if (sb.length() >= 1200 || itr == sentenceList.size()-1) {
+            if (sb.length() >= chunkSize || itr == sentenceList.size()-1) {
                 Chunk chunk = Chunk.builder()
                         .chatId(chatId)
                         .docId(docId)

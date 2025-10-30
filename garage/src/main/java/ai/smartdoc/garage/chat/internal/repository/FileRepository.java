@@ -9,4 +9,6 @@ import java.util.List;
 public interface FileRepository {
 
     List<Chunk> getChunksByDocIdAndChunkIndex(List<Chunk> chunkList);
+
+    List<Chunk> getTopNChunksByBM25Score(String chatId, String question, Integer topN);
 }

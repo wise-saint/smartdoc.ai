@@ -44,8 +44,8 @@ class QdrantService implements QdrantPort {
     }
 
     @Override
-    public List<Chunk> queryPoints(List<Float> queryVector, String chatId, Integer topK) {
-        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, topK, chatId);
+    public List<Chunk> queryPoints(List<Float> queryVector, String chatId, Integer topN) {
+        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, topN, chatId);
         List<Chunk> chunkList = new ArrayList<>();
         if (searchResponse.getStatus().equals("ok") && searchResponse.getResult() != null) {
             SearchResponse.Result result = searchResponse.getResult();
@@ -56,6 +56,7 @@ class QdrantService implements QdrantPort {
                         chunkList.add(Chunk.builder()
                                         .docId(point.getPayload().getDocId())
                                         .chunkIndex(point.getPayload().getChunkIndex())
+                                        .score(point.getScore())
                                         .build());
                     }
                 }
