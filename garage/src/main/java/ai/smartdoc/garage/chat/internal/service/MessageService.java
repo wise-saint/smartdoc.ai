@@ -16,9 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 @Service
 class MessageService {
@@ -39,6 +37,9 @@ class MessageService {
     @Autowired
     FileDao fileDao;
 
+    private static final Integer topN = 100;
+    private static final Integer defaultK = 60;
+
     private Message saveMessage(String chatId, String messageText, String sender) {
         Message message = Message.builder()
                 .chatId(chatId)
@@ -54,13 +55,19 @@ class MessageService {
     };
 
     String askQuestion(String chatId, String question) {
+        if (question == null || question.trim().split("\\s+").length < 5) {
+            throw new GarageException("Plese provide more context", HttpStatus.BAD_REQUEST);
+        }
         question = preprocessQuestion(question);
+
         List<Float> embeddingVector = huggingFacePort.getEmbeddingVectors(question);
-        List<Chunk> chunkList = qdrantPort.queryPoints(embeddingVector, chatId, 30);
-        chunkList = fileDao.getChunksByDocIdAndChunkIndex(chunkList);
+        List<Chunk> topQdrantChunks = qdrantPort.queryPoints(embeddingVector, chatId, topN);
+        List<Chunk> topBm25Chunks = fileDao.getTopNChunksByBM25Score(chatId, question, topN);
+        List<Chunk> fusedChunkList = applyReciprocalRankFusion(topQdrantChunks, topBm25Chunks);
+        fusedChunkList = fileDao.getChunksByDocIdAndChunkIndex(fusedChunkList.subList(0, Math.min(fusedChunkList.size(), 30)));
 
         List<String> documents = new ArrayList<>();
-        for (Chunk chunk: chunkList) {
+        for (Chunk chunk: fusedChunkList) {
             if (chunk != null && chunk.getPreprocessedText() != null && !chunk.getPreprocessedText().isEmpty()) {
                 documents.add(chunk.getPreprocessedText());
             }
@@ -79,6 +86,7 @@ class MessageService {
         String context = contextBuilder.toString();
 
         String answer = null;
+
         if (!context.isEmpty()) {
             List<Message> chatHistory = messageDao.getChatMessages(chatId);
             answer = huggingFacePort.completeChat(context, question, chatHistory);
@@ -97,5 +105,39 @@ class MessageService {
         question = question.toLowerCase(Locale.ENGLISH);
         question = question.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", " ");
         return question.replaceAll("\\s+", " ").trim();
+    }
+
+    private List<Chunk> applyReciprocalRankFusion(List<Chunk> topQdrantChunks, List<Chunk> topBm25Chunks) {
+        HashMap<String, Double> hashMap = new HashMap<>();
+        for (int i = 0; i < topQdrantChunks.size(); i++) {
+            Chunk chunk = topQdrantChunks.get(i);
+            String id = chunk.getDocId() + "#" + chunk.getChunkIndex().toString();
+            hashMap.put(id, 1.0/(defaultK + i + 1));
+        }
+
+        for (int i = 0; i < topBm25Chunks.size(); i++) {
+            Chunk chunk = topBm25Chunks.get(i);
+            String id = chunk.getDocId() + "#" + chunk.getChunkIndex().toString();
+            if (hashMap.get(id) == null) {
+                hashMap.put(id, 1.0/(defaultK + i + 1));
+            } else {
+                hashMap.put(id, hashMap.get(id) + 1.0/(defaultK + i + 1));
+            }
+        }
+
+        List<Map.Entry<String, Double>> list = new ArrayList<>(hashMap.entrySet());
+        list.sort(Map.Entry.<String, Double>comparingByValue().reversed());
+
+        List<Chunk> chunkList = new ArrayList<>();
+        for (Map.Entry<String, Double> entry: list) {
+            String [] arr = entry.getKey().split("#");
+            chunkList.add(Chunk.builder()
+                    .docId(arr[0])
+                    .chunkIndex(Integer.parseInt(arr[1]))
+                    .score(entry.getValue())
+                    .build());
+        }
+
+        return chunkList;
     }
 }
