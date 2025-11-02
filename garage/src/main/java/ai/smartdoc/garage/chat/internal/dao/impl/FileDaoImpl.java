@@ -1,5 +1,6 @@
 package ai.smartdoc.garage.chat.internal.dao.impl;
 
+import ai.smartdoc.garage.chat.internal.constants.ChunkCollection;
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
 import ai.smartdoc.garage.chat.internal.repository.FileRepository;
 import org.bson.Document;
@@ -9,7 +10,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,15 @@ class FileDaoImpl implements FileRepository {
     MongoTemplate mongoTemplate;
 
     @Override
-    public List<Chunk> getChunksByDocIdAndChunkIndex(List<Chunk> chunkList) {
+    public List<Chunk> saveAllChunks(List<Chunk> chunksList, ChunkCollection chunkCollection) {
+        if (chunksList == null || chunksList.isEmpty()) {
+            return List.of();
+        }
+        return (List<Chunk>) mongoTemplate.insert(chunksList, chunkCollection.getName());
+    }
+
+    @Override
+    public List<Chunk> getChunksByDocIdAndChunkIndex(List<Chunk> chunkList, ChunkCollection chunkCollection) {
         List<Criteria> criteriaList = new ArrayList<>();
         for (Chunk chunk: chunkList) {
             criteriaList.add(new Criteria().andOperator(
@@ -36,15 +44,15 @@ class FileDaoImpl implements FileRepository {
                         .andExclude("_id")
         );
 
-        AggregationResults<Chunk> results = mongoTemplate.aggregate(aggregation, "chunks", Chunk.class);
+        AggregationResults<Chunk> results = mongoTemplate.aggregate(aggregation, chunkCollection.getName(), Chunk.class);
         return  results.getMappedResults();
     }
 
     @Override
-    public List<Chunk> getTopNChunksByBM25Score(String chatId, String question, Integer topN) {
+    public List<Chunk> getTopNChunksByBM25Score(String chatId, String question, Integer topN, ChunkCollection chunkCollection) {
         List<Document> pipeline = List.of(
                 new Document("$search",
-                        new Document("index", "bm25_chunk_index")
+                        new Document("index", chunkCollection.getIndexName())
                                 .append("compound", new Document()
                                         .append("filter", List.of(
                                                 new Document("equals",
@@ -68,7 +76,7 @@ class FileDaoImpl implements FileRepository {
                 new Document("$limit", topN)
         );
 
-        List<Document> docs = mongoTemplate.getCollection("chunks")
+        List<Document> docs = mongoTemplate.getCollection(chunkCollection.getName())
                 .aggregate(pipeline)
                 .into(new java.util.ArrayList<>());
 
