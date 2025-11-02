@@ -1,5 +1,6 @@
 package ai.smartdoc.garage.qdrant.internal;
 
+import ai.smartdoc.garage.chat.internal.constants.ChunkCollection;
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
 import ai.smartdoc.garage.common.exception.GarageException;
 import ai.smartdoc.garage.qdrant.QdrantPort;
@@ -18,7 +19,8 @@ class QdrantService implements QdrantPort {
     QdrantClient qdrantClient;
 
     @Override
-    public String upsertPoints(List<Chunk> chunks, List<List<Float>> embeddingVectors, String docId, String chatId) {
+    public String upsertPoints(List<Chunk> chunks, List<List<Float>> embeddingVectors, String docId,
+                               String chatId, ChunkCollection chunkCollection) {
         if (chunks.size() != embeddingVectors.size()) {
             throw new GarageException("Chunks and Embedding Vectors size doesn't match", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -39,13 +41,13 @@ class QdrantService implements QdrantPort {
             qdrantPoints.add(qdrantPoint);
         }
 
-        UpsertResponse response = qdrantClient.upsertPoints(qdrantPoints);
+        UpsertResponse response = qdrantClient.upsertPoints(qdrantPoints, chunkCollection);
         return response.getStatus();
     }
 
     @Override
-    public List<Chunk> queryPoints(List<Float> queryVector, String chatId, Integer topN) {
-        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, topN, chatId);
+    public List<Chunk> queryPoints(List<Float> queryVector, String chatId, Integer topN, ChunkCollection chunkCollection) {
+        SearchResponse searchResponse = qdrantClient.queryPoints(queryVector, topN, chatId, chunkCollection);
         List<Chunk> chunkList = new ArrayList<>();
         if (searchResponse.getStatus().equals("ok") && searchResponse.getResult() != null) {
             SearchResponse.Result result = searchResponse.getResult();

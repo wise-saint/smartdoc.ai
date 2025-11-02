@@ -1,5 +1,6 @@
 package ai.smartdoc.garage.chat.internal.service;
 
+import ai.smartdoc.garage.chat.internal.constants.ChunkCollection;
 import ai.smartdoc.garage.chat.internal.dao.FileDao;
 import ai.smartdoc.garage.chat.internal.entity.Chat;
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
@@ -22,10 +23,15 @@ import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 @Service
 class FileService {
     Logger logger = LoggerFactory.getLogger(FileService.class);
+
+    @Autowired
+    ExecutorService executor;
 
     @Autowired
     HuggingFacePort huggingFacePort;
@@ -45,16 +51,18 @@ class FileService {
 
         String text = extractText(file);
         List<String> sentenceList = getSentences(text);
-        List<Chunk> chunkList = createChunks(sentenceList, chatId, docId);
-        preprocessChunks(chunkList);
-        fileDao.saveAll(chunkList);
 
-        List<List<Float>> embeddingVectors = huggingFacePort.getEmbeddingVectors(chunkList);
-        String upsertStatus = qdrantPort.upsertPoints(chunkList, embeddingVectors, docId, chatId);
+        Future<?> chunk128 = executor.submit(() -> processChunks(sentenceList, chatId, docId, ChunkCollection.CHUNKS_128));
+        Future<?> chunk768 = executor.submit(() -> processChunks(sentenceList, chatId, docId, ChunkCollection.CHUNKS_768));
 
-        if (!upsertStatus.equalsIgnoreCase("ok")) {
-            throw new GarageException("Failed to upsert points in Qdrant", HttpStatus.INTERNAL_SERVER_ERROR);
+        try {
+            chunk128.get();
+            chunk768.get();
+        } catch (Exception e) {
+            throw new GarageException("File upload failed due to parallel chunk processing error: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
         return new UploadResponse(docId, HttpStatus.ACCEPTED);
     }
 
@@ -110,11 +118,31 @@ class FileService {
         return sentences;
     }
 
-    private List<Chunk> createChunks(List<String> sentenceList, String chatId, String docId) {
+    private void processChunks(List<String> sentenceList, String chatId, String docId, ChunkCollection chunkCollection) {
+        List<Chunk> chunkList = createChunks(sentenceList, chatId, docId, chunkCollection);
+        preprocessChunks(chunkList);
+
+        Future<?> dbFuture = executor.submit(() -> fileDao.saveAllChunks(chunkList, chunkCollection));
+
+        List<List<Float>> vectors = huggingFacePort.getEmbeddingVectors(chunkList);
+        String status = qdrantPort.upsertPoints(chunkList, vectors, docId, chatId, chunkCollection);
+
+        if (!"ok".equalsIgnoreCase(status)) {
+            throw new GarageException("Qdrant upsert failed for " + chunkCollection.getSize() + "-chunks", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        try {
+            dbFuture.get();
+        } catch (Exception e) {
+            throw new GarageException("Mongo save failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private List<Chunk> createChunks(List<String> sentenceList, String chatId, String docId, ChunkCollection chunkCollection) {
         List<Chunk> chunkList = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
+        int chunkSize = chunkCollection.getSize();
         int chunkIndex = 0;
-        int chunkSize = 768; // Chars count
         for (int start = 0, itr = 0; itr < sentenceList.size(); itr++) {
             sb.append(sentenceList.get(itr)).append(" ");
             if (sb.length() >= chunkSize || itr == sentenceList.size()-1) {
@@ -144,8 +172,6 @@ class FileService {
             text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFC);
             text = text.toLowerCase(Locale.ENGLISH);
             text = text.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", " ");
-//            text = text.replaceAll("https?://\\S+\\b", " ");
-//            text = text.replaceAll("\\b\\S+@\\S+\\b", " ");
             text = text.replaceAll("\\s+", " ").trim();
             chunk.setPreprocessedText(text);
         }

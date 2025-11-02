@@ -1,5 +1,6 @@
 package ai.smartdoc.garage.chat.internal.service;
 
+import ai.smartdoc.garage.chat.internal.constants.ChunkCollection;
 import ai.smartdoc.garage.chat.internal.dao.FileDao;
 import ai.smartdoc.garage.chat.internal.dao.MessageDao;
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.nodes.CollectionNode;
 
 import java.util.*;
 
@@ -55,16 +57,19 @@ class MessageService {
     };
 
     String askQuestion(String chatId, String question) {
-        if (question == null || question.trim().split("\\s+").length < 5) {
+        int questionLength = question.trim().split("\\s+").length;
+        if (questionLength < 5) {
             throw new GarageException("Plese provide more context", HttpStatus.BAD_REQUEST);
         }
         question = preprocessQuestion(question);
 
+        ChunkCollection chunkCollection = questionLength < 15 ? ChunkCollection.CHUNKS_128 : ChunkCollection.CHUNKS_768;
+
         List<Float> embeddingVector = huggingFacePort.getEmbeddingVectors(question);
-        List<Chunk> topQdrantChunks = qdrantPort.queryPoints(embeddingVector, chatId, topN);
-        List<Chunk> topBm25Chunks = fileDao.getTopNChunksByBM25Score(chatId, question, topN);
+        List<Chunk> topQdrantChunks = qdrantPort.queryPoints(embeddingVector, chatId, topN, chunkCollection);
+        List<Chunk> topBm25Chunks = fileDao.getTopNChunksByBM25Score(chatId, question, topN, chunkCollection);
         List<Chunk> fusedChunkList = applyReciprocalRankFusion(topQdrantChunks, topBm25Chunks);
-        fusedChunkList = fileDao.getChunksByDocIdAndChunkIndex(fusedChunkList.subList(0, Math.min(fusedChunkList.size(), 30)));
+        fusedChunkList = fileDao.getChunksByDocIdAndChunkIndex(fusedChunkList.subList(0, Math.min(fusedChunkList.size(), 30)), chunkCollection);
 
         List<String> documents = new ArrayList<>();
         for (Chunk chunk: fusedChunkList) {
