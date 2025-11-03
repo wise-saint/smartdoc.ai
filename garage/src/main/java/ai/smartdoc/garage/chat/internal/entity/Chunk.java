@@ -3,13 +3,19 @@ package ai.smartdoc.garage.chat.internal.entity;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
-//@Document("chunks") // Changed to chunks_128 and chunks_768
+@Document("chunks")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@CompoundIndexes({
+        @CompoundIndex(name = "doc_chunk_idx", def = "{'doc_id': 1, 'chunk_index': 1}")
+})
 public class Chunk {
 
     @Id

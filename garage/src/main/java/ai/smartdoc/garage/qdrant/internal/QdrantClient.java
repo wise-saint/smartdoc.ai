@@ -1,6 +1,5 @@
 package ai.smartdoc.garage.qdrant.internal;
 
-import ai.smartdoc.garage.chat.internal.constants.ChunkCollection;
 import ai.smartdoc.garage.common.exception.GarageException;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,11 +26,11 @@ class QdrantClient {
         this.API_KEY = apiKey;
     }
 
-    public UpsertResponse upsertPoints(List<QdrantPoint> qdrantPoints, ChunkCollection chunkCollection) {
+    public UpsertResponse upsertPoints(List<QdrantPoint> qdrantPoints) {
         String jsonBody = new Gson().toJson(Map.of("points", qdrantPoints));
         RequestBody body = RequestBody.create(jsonBody, MediaType.get("application/json"));
         Request request = new Request.Builder()
-                .url(BASE_URL + "/" + chunkCollection.getName() + "/points")
+                .url(BASE_URL + "/knowledge-base/points")
                 .put(body)
                 .addHeader("api-key", API_KEY)
                 .addHeader("Content-Type", "application/json")
@@ -49,7 +48,7 @@ class QdrantClient {
         }
     }
 
-    public SearchResponse queryPoints(List<Float> queryVector, int limit, String chatId, ChunkCollection chunkCollection) {
+    public SearchResponse queryPoints(List<Float> queryVector, int limit, String chatId) {
         Map<String, Object> body = new HashMap<>();
         body.put("query", queryVector);
         body.put("limit", limit);
@@ -65,7 +64,7 @@ class QdrantClient {
         String jsonBody = new Gson().toJson(body);
         RequestBody requestBody = RequestBody.create(jsonBody, MediaType.get("application/json"));
         Request request = new Request.Builder()
-                .url(BASE_URL + "/" + chunkCollection.getName() + "/points/query")
+                .url(BASE_URL + "/knowledge-base/points/query")
                 .post(requestBody)
                 .addHeader("api-key", API_KEY)
                 .addHeader("Content-Type", "application/json")

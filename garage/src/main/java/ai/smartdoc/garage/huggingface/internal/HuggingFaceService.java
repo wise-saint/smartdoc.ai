@@ -17,21 +17,19 @@ import java.util.concurrent.*;
 class HuggingFaceService implements HuggingFacePort {
 
     @Autowired
-    ExecutorService executor;
-
-    @Autowired
     HuggingFaceClient huggingFaceClient;
 
     @Override
     public List<List<Float>> getEmbeddingVectors(List<Chunk> chunks) {
         int batchSize = 16;
         List<List<Float>> embeddingVectors = new ArrayList<>(Collections.nCopies(chunks.size(), null));
+        ExecutorService executor = Executors.newFixedThreadPool(8);
         List<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < chunks.size(); i += batchSize) {
             int start = i;
             int end = Math.min(i + batchSize, chunks.size());
             List<Chunk> batch = chunks.subList(start, end);
-            Future<?> f = executor.submit(() ->   {
+            Future<?> f = executor.submit(() -> {
                 List<String> texts = batch.stream().map(Chunk::getPreprocessedText).toList();
                 List<List<Float>> batchVectors = huggingFaceClient.getEmbeddingVectors(texts);
                 for (int k = 0; k < batch.size(); k++) {
@@ -46,6 +44,14 @@ class HuggingFaceService implements HuggingFacePort {
             } catch (Exception e) {
                 throw new GarageException("Embedding batch failed " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
+        }
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(2, TimeUnit.MINUTES)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            throw new GarageException("Executor interrupted as time exceeded 2 minutes", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return embeddingVectors;
     }
