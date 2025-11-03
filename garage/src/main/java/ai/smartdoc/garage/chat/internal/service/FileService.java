@@ -22,10 +22,15 @@ import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 @Service
 class FileService {
     Logger logger = LoggerFactory.getLogger(FileService.class);
+
+    @Autowired
+    ExecutorService executor;
 
     @Autowired
     HuggingFacePort huggingFacePort;
@@ -47,13 +52,18 @@ class FileService {
         List<String> sentenceList = getSentences(text);
         List<Chunk> chunkList = createChunks(sentenceList, chatId, docId);
         preprocessChunks(chunkList);
-        fileDao.saveAll(chunkList);
+        Future<?> dbFuture = executor.submit(() -> fileDao.saveAll(chunkList));
 
         List<List<Float>> embeddingVectors = huggingFacePort.getEmbeddingVectors(chunkList);
         String upsertStatus = qdrantPort.upsertPoints(chunkList, embeddingVectors, docId, chatId);
 
         if (!upsertStatus.equalsIgnoreCase("ok")) {
             throw new GarageException("Failed to upsert points in Qdrant", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        try {
+            dbFuture.get();
+        } catch (Exception e) {
+            throw new GarageException("Mongo save failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new UploadResponse(docId, HttpStatus.ACCEPTED);
     }
@@ -114,7 +124,7 @@ class FileService {
         List<Chunk> chunkList = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         int chunkIndex = 0;
-        int chunkSize = 768; // Chars count
+        int chunkSize = 2500; // Chars count = ~512 tokens
         for (int start = 0, itr = 0; itr < sentenceList.size(); itr++) {
             sb.append(sentenceList.get(itr)).append(" ");
             if (sb.length() >= chunkSize || itr == sentenceList.size()-1) {
@@ -144,8 +154,6 @@ class FileService {
             text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFC);
             text = text.toLowerCase(Locale.ENGLISH);
             text = text.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", " ");
-//            text = text.replaceAll("https?://\\S+\\b", " ");
-//            text = text.replaceAll("\\b\\S+@\\S+\\b", " ");
             text = text.replaceAll("\\s+", " ").trim();
             chunk.setPreprocessedText(text);
         }
