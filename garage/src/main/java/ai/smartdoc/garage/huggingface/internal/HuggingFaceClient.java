@@ -111,7 +111,7 @@ class HuggingFaceClient {
         systemMessage.addProperty("content", "You are an AI assistant. " +
                 "Do not use any external knowledge or assumptions. " +
                 "Generate answers strictly using the provided context. " +
-                "If context is insufficient to answer the questions, don't generate answer.");
+                "If context is insufficient to answer the questions, say 'Context Insufficient'.");
         return systemMessage;
     }
 

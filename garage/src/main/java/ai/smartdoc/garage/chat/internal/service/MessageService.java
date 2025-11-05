@@ -1,7 +1,9 @@
 package ai.smartdoc.garage.chat.internal.service;
 
+import ai.smartdoc.garage.chat.internal.dao.ChatDao;
 import ai.smartdoc.garage.chat.internal.dao.FileDao;
 import ai.smartdoc.garage.chat.internal.dao.MessageDao;
+import ai.smartdoc.garage.chat.internal.entity.Chat;
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
 import ai.smartdoc.garage.chat.internal.entity.Message;
 import ai.smartdoc.garage.cohere.CoherePort;
@@ -37,6 +39,9 @@ class MessageService {
     @Autowired
     FileDao fileDao;
 
+    @Autowired
+    ChatDao chatDao;
+
     private static final Integer topN = 100;
     private static final Integer defaultK = 60;
 
@@ -56,7 +61,14 @@ class MessageService {
 
     String askQuestion(String chatId, String question) {
         if (question == null || question.trim().split("\\s+").length < 5) {
-            throw new GarageException("Plese provide more context", HttpStatus.BAD_REQUEST);
+            throw new GarageException("Please provide more context", HttpStatus.BAD_REQUEST);
+        }
+        Optional<Chat> chatOptional = chatDao.getChatById(chatId);
+        if (chatOptional.isEmpty()) {
+            throw new GarageException("Chat not found", HttpStatus.NOT_FOUND);
+        }
+        if (chatOptional.get().getDocuments() == null || chatOptional.get().getDocuments().isEmpty()) {
+            throw new GarageException("No document uploaded to query", HttpStatus.PRECONDITION_FAILED);
         }
         question = preprocessQuestion(question);
 
@@ -77,7 +89,7 @@ class MessageService {
         StringBuilder contextBuilder = new StringBuilder();
         int chunkNumber = 1;
         for (CohereRerankResponse response : cohereRerankResponseList) {
-            if (response.getScore() > 0.5 && response.getDocument() != null && !response.getDocument().isEmpty()) {
+            if (response.getScore() > 0.3 && response.getDocument() != null && !response.getDocument().isEmpty()) {
                 contextBuilder.append("Chunk ").append(chunkNumber++).append(": ")
                         .append(response.getDocument()).append("\n");
                 if (chunkNumber == 4) break;
@@ -92,7 +104,7 @@ class MessageService {
             answer = huggingFacePort.completeChat(context, question, chatHistory);
         }
         if (answer == null || answer.isEmpty()) {
-            throw new GarageException("Failed to generate answer as threshold cosine similarity score didn't pass", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new GarageException("Failed to generate answer, try rephrasing your query", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         saveMessage(chatId, question, "user");

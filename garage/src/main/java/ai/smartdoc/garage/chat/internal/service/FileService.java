@@ -136,12 +136,15 @@ class FileService {
                         .build();
                 chunkList.add(chunk);
                 sb.setLength(0);
-                if(itr != sentenceList.size()-1) { // 2 sentence overlap
-                    int nextStart  = itr - 1;
-                    if(start < nextStart) {
-                        start = nextStart;
-                        itr = --nextStart;
+                if(itr != sentenceList.size()-1) {
+                    int overlapCharCount = 0;
+                    int backItr;
+                    for (backItr = itr; backItr > start; backItr--) {
+                        overlapCharCount += sentenceList.get(backItr).length();
+                        if(overlapCharCount >= 750) break; // 30% overlap
                     }
+                    start = backItr;
+                    itr = --backItr;
                 }
             }
         }
