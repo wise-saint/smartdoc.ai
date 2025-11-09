@@ -1,4 +1,4 @@
-package ai.smartdoc.garage.qdrant.internal;
+package ai.smartdoc.garage.infra.qdrant.internal;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;

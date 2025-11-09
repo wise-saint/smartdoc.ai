@@ -2,7 +2,7 @@ package ai.smartdoc.garage.chat;
 
 import ai.smartdoc.garage.chat.internal.entity.Chat;
 import ai.smartdoc.garage.chat.internal.entity.Message;
-import ai.smartdoc.garage.common.dto.UploadResponse;
+import ai.smartdoc.garage.chat.internal.dto.UploadResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

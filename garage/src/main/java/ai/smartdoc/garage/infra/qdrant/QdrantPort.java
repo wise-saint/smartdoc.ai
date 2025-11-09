@@ -1,4 +1,4 @@
-package ai.smartdoc.garage.qdrant;
+package ai.smartdoc.garage.infra.qdrant;
 
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
 

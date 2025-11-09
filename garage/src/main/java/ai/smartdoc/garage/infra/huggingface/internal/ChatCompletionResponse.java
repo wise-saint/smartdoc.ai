@@ -1,4 +1,4 @@
-package ai.smartdoc.garage.huggingface.internal;
+package ai.smartdoc.garage.infra.huggingface.internal;
 
 import lombok.Data;
 
