@@ -1,4 +1,4 @@
-package ai.smartdoc.garage.huggingface.internal;
+package ai.smartdoc.garage.infra.huggingface.internal;
 
 import ai.smartdoc.garage.chat.internal.entity.Message;
 import ai.smartdoc.garage.common.exception.GarageException;

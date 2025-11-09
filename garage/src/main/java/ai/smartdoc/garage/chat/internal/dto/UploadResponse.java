@@ -1,4 +1,4 @@
-package ai.smartdoc.garage.common.dto;
+package ai.smartdoc.garage.chat.internal.dto;
 
 import lombok.Data;
 import org.springframework.http.HttpStatus;

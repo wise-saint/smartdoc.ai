@@ -1,4 +1,4 @@
-package ai.smartdoc.garage.qdrant.internal;
+package ai.smartdoc.garage.infra.qdrant.internal;
 
 import ai.smartdoc.garage.common.exception.GarageException;
 import com.google.gson.Gson;

@@ -1,4 +1,4 @@
-package ai.smartdoc.garage.cohere.internal;
+package ai.smartdoc.garage.infra.cohere.internal;
 
 import com.cohere.api.Cohere;
 import com.cohere.api.resources.v2.requests.V2RerankRequest;

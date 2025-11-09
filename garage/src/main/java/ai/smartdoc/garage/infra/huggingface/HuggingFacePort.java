@@ -1,4 +1,4 @@
-package ai.smartdoc.garage.huggingface;
+package ai.smartdoc.garage.infra.huggingface;
 
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
 import ai.smartdoc.garage.chat.internal.entity.Message;

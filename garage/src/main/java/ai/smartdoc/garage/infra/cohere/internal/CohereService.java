@@ -1,6 +1,6 @@
-package ai.smartdoc.garage.cohere.internal;
+package ai.smartdoc.garage.infra.cohere.internal;
 
-import ai.smartdoc.garage.cohere.CoherePort;
+import ai.smartdoc.garage.infra.cohere.CoherePort;
 import ai.smartdoc.garage.common.dto.CohereRerankResponse;
 import ai.smartdoc.garage.common.exception.GarageException;
 import com.cohere.api.resources.v2.types.V2RerankResponse;

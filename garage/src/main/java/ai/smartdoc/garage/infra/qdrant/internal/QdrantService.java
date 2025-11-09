@@ -1,8 +1,8 @@
-package ai.smartdoc.garage.qdrant.internal;
+package ai.smartdoc.garage.infra.qdrant.internal;
 
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
 import ai.smartdoc.garage.common.exception.GarageException;
-import ai.smartdoc.garage.qdrant.QdrantPort;
+import ai.smartdoc.garage.infra.qdrant.QdrantPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

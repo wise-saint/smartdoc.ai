@@ -1,9 +1,9 @@
-package ai.smartdoc.garage.huggingface.internal;
+package ai.smartdoc.garage.infra.huggingface.internal;
 
 import ai.smartdoc.garage.chat.internal.entity.Chunk;
 import ai.smartdoc.garage.chat.internal.entity.Message;
 import ai.smartdoc.garage.common.exception.GarageException;
-import ai.smartdoc.garage.huggingface.HuggingFacePort;
+import ai.smartdoc.garage.infra.huggingface.HuggingFacePort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

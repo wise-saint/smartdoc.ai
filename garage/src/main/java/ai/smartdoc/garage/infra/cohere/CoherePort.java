@@ -1,4 +1,4 @@
-package ai.smartdoc.garage.cohere;
+package ai.smartdoc.garage.infra.cohere;
 
 import ai.smartdoc.garage.common.dto.CohereRerankResponse;
 
