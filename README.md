@@ -6,7 +6,7 @@ The system retrieves relevant document context and generates grounded responses 
 ## Document Ingestion Pipeline
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Upload Document]
     B[Text Extraction + Preprocessing]
     C[Chunking]
@@ -23,7 +23,7 @@ flowchart TD
 
 ## Retrieval Pipeline
 ```mermaid
-flowchart TD
+flowchart LR
     A[User Query]
     B[Query Preprocessing]
     C[Hybrid Retrieval]
