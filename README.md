@@ -1,3 +1,5 @@
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
 <h1 align="center">smartdoc.ai</h1>
 
 smartdoc.ai is a **Retrieval-Augmented Generation (RAG) system** that enables users to upload documents and query them through a conversational interface. 
