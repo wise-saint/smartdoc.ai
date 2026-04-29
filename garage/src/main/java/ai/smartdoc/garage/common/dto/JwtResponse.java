@@ -7,7 +7,7 @@ public class JwtResponse {
 
     private String userId;
     private String emailId;
-    private String accessToke;
+    private String accessToken;
     private String refreshToken;
     private Long accessExpiresAt;
     private Long refreshExpiresAt;

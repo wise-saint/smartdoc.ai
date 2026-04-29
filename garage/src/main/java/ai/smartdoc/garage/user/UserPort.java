@@ -8,4 +8,5 @@ public interface UserPort {
 
     User findUserByEmailId(String emailId);
 
+    User editUser(User user);
 }

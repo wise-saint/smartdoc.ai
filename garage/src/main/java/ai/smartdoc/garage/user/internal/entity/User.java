@@ -32,10 +32,10 @@ public class User {
     private String emailId;
 
     @Field(name = "is_verified")
-    private String isVerified;
+    private Boolean isVerified;
 
     @Field(name = "is_active")
-    private String isActive;
+    private Boolean isActive;
 
     @CreatedDate
     @Field(name = "created_at")

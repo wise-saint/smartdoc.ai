@@ -8,6 +8,6 @@ import org.springframework.stereotype.Service;
 class SessionService {
 
     public Session createSession(String userId, HttpServletRequest httpServletRequest) {
-
+        return null;
     }
 }
